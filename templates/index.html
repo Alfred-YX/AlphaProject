@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alpha</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          purple: {900: '#3E0B40', 800: '#4A0C4E', 700: '#5D1263'},
+          pink: {900: '#610A3A', 800: '#771248', 700: '#911A5C', 500: '#E91E63'},
+          gray: {900: '#0F0F10', 800: '#1A1A1D', 700: '#2D2D30'}
+        }
+      }
+    }
+  }
+</script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <style type="text/tailwindcss">
+  @layer utilities {
+    .content-auto {
+      content-visibility: auto;
+    }
+    .text-shadow {
+      text-shadow: 0 0 8px rgba(233, 30, 99, 0.5);
+    }
+    .glow {
+      box-shadow: 0 0 15px rgba(233, 30, 99, 0.5);
+    }
+    .bg-pattern {
+      background-image: radial-gradient(rgba(233, 30, 99, 0.1) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+  }
+</style>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .chat-bubble-user {
+                border-radius: 18px 18px 4px 18px;
+            }
+            .chat-bubble-ai {
+                border-radius: 18px 18px 18px 4px;
+            }
+            .typing-indicator {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+            .typing-indicator span {
+                width: 8px;
+                height: 8px;
+                background-color: #6B7280;
+                border-radius: 50%;
+                animation: typing 1.4s infinite ease-in-out both;
+            }
+            .typing-indicator span:nth-child(1) {
+                animation-delay: -0.32s;
+            }
+            .typing-indicator span:nth-child(2) {
+                animation-delay: -0.16s;
+            }
+            @keyframes typing {
+                0%, 80%, 100% {
+                    transform: scale(0);
+                }
+                40% {
+                    transform: scale(1);
+                }
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-900 to-gray-800 min-h-screen flex flex-col text-white">
+    <!-- 顶部导航 -->
+    <header class="bg-gray-900/80 backdrop-blur-md shadow-sm py-4 px-6 sticky top-0 z-10 border-b border-purple-900/50">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="w-12 h-12 rounded-full bg-gradient-to-r from-purple-700 to-pink-700 flex items-center justify-center text-white text-xl border-2 border-pink-500/50 shadow-lg shadow-pink-500/30 animate-pulse glow">
+                    <i class="fa fa-heart"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold bg-gradient-to-r from-pink-400 to-purple-500 bg-clip-text text-transparent font-black tracking-wider">Alpha智能体</h1>
+                    <p class="text-xs text-pink-400/80">Alpha</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button id="favorabilityBtn" class="bg-gray-800 rounded-full py-2 px-4 shadow-sm flex items-center space-x-2 text-sm border border-purple-500/30 hover:border-pink-500/50 transition-colors">
+                    <i class="fa fa-heart text-pink-500"></i>
+                    <span>好感度: <span id="favorabilityValue">0</span></span>
+                    <i class="fa fa-info-circle text-pink-400/70 text-xs"></i>
+                </button>
+                <button id="settingsBtn" class="bg-gray-800 p-2 rounded-full shadow-sm border border-purple-500/30 hover:border-pink-500/50 transition-colors hover:glow">
+                    <i class="fa fa-cog text-pink-400"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="flex-grow container mx-auto px-4 py-6">
+        <!-- 聊天区域 -->
+        <div class="max-w-3xl mx-auto bg-gray-800 rounded-2xl shadow-xl overflow-hidden flex flex-col h-[calc(100vh-220px)] border-2 border-purple-900/50 relative">
+  <div class="absolute -top-1 -left-1 w-[calc(100%+2px)] h-[calc(100%+2px)] rounded-2xl border border-pink-500/30 -z-10"></div>
+            <!-- 聊天头部 -->
+            <div class="bg-gradient-to-r from-purple-900 to-pink-900 text-white p-4 border-b border-pink-900/50">
+                <div class="flex items-center justify-between">
+                    <h2 class="font-semibold text-lg text-shadow"><i class="fa fa-comments-o mr-2"></i>聊天</h2>
+                    <div class="flex space-x-2 mt-2">
+                        <button id="voiceCallBtn" class="p-2 rounded-full hover:bg-white/20 transition-colors">
+                            <i class="fa fa-phone"></i>
+                        </button>
+                        <button id="videoCallBtn" class="p-2 rounded-full hover:bg-white/20 transition-colors">
+                            <i class="fa fa-video-camera"></i>
+                        </button>
+                    </div>
+                </div>
+                <p class="text-xs opacity-90 mt-1">在线</p>
+            </div>
+
+            <!-- 聊天消息区域 -->
+            <div id="chatMessages" class="flex-grow overflow-y-auto p-4 space-y-6 bg-[url('https://picsum.photos/id/1048/1200/800')] bg-cover bg-center bg-opacity-10 bg-pattern">
+                <!-- 欢迎消息 -->
+                <div class="flex items-start space-x-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-r from-purple-700 to-pink-700 flex-shrink-0 border-2 border-pink-500/50 shadow-lg overflow-hidden">
+  <img src="https://picsum.photos/id/64/100/100" alt="Alpha" class="w-full h-full object-cover">
+</div>
+                    <div class="max-w-[75%]">
+                        <div class="bg-gradient-to-r from-purple-900/80 to-pink-900/80 p-4 rounded-2xl shadow-lg chat-bubble-ai border border-pink-500/30 backdrop-blur-sm relative overflow-hidden before:content-[''] before:absolute before:top-0 before:right-0 before:w-20 before:h-20 before:bg-pink-500/10 before:rounded-full before:-mr-10 before:-mt-10">
+                            <p class="text-gray-100">嗨，亲爱的！我是Alpha~ 有什么想跟我说的吗？可以分享你的一天，或者上传图片给我看哦~</p>
+                        </div>
+                        <p class="text-xs text-pink-400/60 mt-1" id="message-time"></p>
+                        <script>
+                            function updateTime() {
+                                const timeElement = document.getElementById('message-time');
+                                timeElement.textContent = new Date().toLocaleTimeString('zh-CN', {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+                            }
+                            updateTime(); // 初始加载时更新
+                        </script>
+                    </div>
+                </div>
+
+                <!-- 聊天历史将通过JS动态添加 -->
+            </div>
+
+            <!-- 输入区域 -->
+            <div class="border-t border-purple-900/50 p-4 bg-gray-900/50 backdrop-blur-sm">
+                <!-- 图片上传 -->
+                <div class="mb-3 border border-purple-900/50 rounded-lg p-3 bg-gray-900/30 backdrop-blur-sm">
+                    <label for="imageUpload" class="flex items-center space-x-2 text-pink-500 cursor-pointer hover:text-pink-600 transition-colors">
+                        <i class="fa fa-image text-xl"></i>
+                        <span class="text-sm">上传图片</span>
+                        <input id="imageUpload" type="file" accept="image/*" class="hidden" />
+                    </label>
+                    <div id="imagePreview" class="mt-2 hidden">
+                        <div class="relative inline-block">
+                            <img id="previewImage" src="" alt="预览" class="max-h-40 rounded-lg border-2 border-pink-500/50 shadow-lg" />
+                            <button id="removeImage" class="absolute -top-2 -right-2 bg-gray-900 rounded-full p-1 shadow-md text-pink-400 hover:text-red-500 border border-pink-500/50">
+                                <i class="fa fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 文本输入 -->
+                <div class="flex space-x-2">
+                    <textarea id="messageInput" class="flex-grow border border-purple-700 bg-gray-800 text-white rounded-full px-5 py-3 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent resize-none placeholder-gray-400 shadow-inner" placeholder="输入消息..." rows="1"></textarea>
+                    <button
+                        id="sendButton"
+                        class="bg-gradient-to-r from-purple-700 to-pink-700 text-white rounded-full p-3 shadow-lg shadow-pink-500/20 hover:from-purple-600 hover:to-pink-600 transition-all transform hover:scale-105"
+                    >
+                        <i class="fa fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="py-4 text-center text-pink-400/60 text-xs bg-gray-900/50 backdrop-blur-sm border-t border-purple-900/30">
+        <p>Alpha © 2025</p>
+    </footer>
+
+    <!-- 设置模态框 -->
+    <div id="settingsModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+        <div class="bg-gray-900 rounded-2xl border-2 border-purple-900/50 shadow-xl max-w-md w-full max-h-[80vh] overflow-y-auto">
+            <div class="bg-gradient-to-r from-purple-900 to-pink-900 p-4 border-b border-pink-900/50 flex justify-between items-center">
+                <h3 class="text-lg font-semibold text-shadow">设置</h3>
+                <button id="closeSettingsBtn" class="text-pink-400 hover:text-white transition-colors">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <div class="p-4 space-y-4">
+                <div class="space-y-2">
+                    <label class="text-sm text-gray-300">人格设置</label>
+                    <select id="personalitySelect" class="w-full bg-gray-800 border border-purple-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-pink-500">
+                        <option value="cute">可爱型</option>
+                        <option value="mature">成熟型</option>
+                        <option value="tsundere">傲娇型</option>
+                        <option value="gentle">温柔型</option>
+                    </select>
+                </div>
+                <button id="saveSettingsBtn" class="w-full bg-gradient-to-r from-purple-700 to-pink-700 text-white py-2 rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all">
+                    保存设置
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 好感度原因提示框 -->
+    <div id="favorabilityReasons" class="fixed bg-gray-900 rounded-xl border border-purple-900/50 shadow-xl p-4 max-w-xs hidden z-50">
+        <h4 class="text-sm font-semibold text-pink-400 mb-2">好感度变化原因</h4>
+        <ul id="reasonsList" class="text-xs text-gray-300 space-y-1 max-h-40 overflow-y-auto"></ul>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="/static/js/script.js"></script>
+    <script>
+        // 设置模态框功能
+        const settingsBtn = document.getElementById('settingsBtn');
+        const settingsModal = document.getElementById('settingsModal');
+        const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+        const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+        const personalitySelect = document.getElementById('personalitySelect');
+
+        settingsBtn.addEventListener('click', async () => {
+            await loadSavedSettings(); // 打开模态框前加载最新设置
+            settingsModal.classList.remove('hidden');
+        });
+        closeSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
+
+        // 点击模态框外部关闭
+        settingsModal.addEventListener('click', (e) => {
+            if (e.target === settingsModal) settingsModal.classList.add('hidden');
+        });
+
+        // 保存人格设置
+        saveSettingsBtn.addEventListener('click', async () => {
+            try {
+                const response = await fetch('/save_settings', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({personality: personalitySelect.value})
+                });
+                const data = await response.json();
+                if (data.status === 'success') {
+                    alert('设置已保存，将在下次对话中生效');
+                    settingsModal.classList.add('hidden');
+                }
+            } catch (error) {
+                console.error('保存设置失败:', error);
+            }
+        });
+
+        // 语音/视频通话提示
+        document.getElementById('voiceCallBtn').addEventListener('click', () => {
+            alert('语音通话功能暂未开放，敬请期待~');
+        });
+
+        document.getElementById('videoCallBtn').addEventListener('click', () => {
+            alert('视频通话功能暂未开放，敬请期待~');
+        });
+
+        // 好感度原因显示
+        const favorabilityBtn = document.getElementById('favorabilityBtn');
+        const favorabilityReasons = document.getElementById('favorabilityReasons');
+
+        favorabilityBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            try {
+                const response = await fetch('/get_favorability');
+                const data = await response.json();
+                if (data.status === 'success') {
+                    document.getElementById('favorabilityValue').textContent = data.favorability;
+                    
+                    const reasonsList = document.getElementById('reasonsList');
+                    reasonsList.innerHTML = '';
+                    data.reasons.forEach(reason => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `<i class="fa fa-heart text-pink-500 mr-1"></i>${reason.reason}<span> ${reason.change}</span>`;
+                        reasonsList.appendChild(li);
+                    });
+
+                    // 显示提示框
+                    favorabilityReasons.classList.toggle('hidden');
+                    const rect = favorabilityBtn.getBoundingClientRect();
+                    favorabilityReasons.style.top = `${rect.bottom + window.scrollY + 5}px`;
+                    favorabilityReasons.style.left = `${rect.left + window.scrollX}px`;
+                }
+            } catch (error) {
+                console.error('获取好感度失败:', error);
+            }
+        });
+
+        // 点击其他区域关闭好感度提示框
+        document.addEventListener('click', () => {
+            favorabilityReasons.classList.add('hidden');
+        });
+
+        // 加载聊天历史
+        async function loadChatHistory() {
+            try {
+                const response = await fetch('/get_chat_history');
+                const data = await response.json();
+                if (data.status === 'success' && data.history.length > 0) {
+                    const chatMessages = document.getElementById('chatMessages');
+                    // 清除欢迎消息以外的内容
+                    const welcomeMessage = chatMessages.querySelector('.chat-bubble-ai').parentElement.parentElement;
+                    chatMessages.innerHTML = '';
+                    chatMessages.appendChild(welcomeMessage);
+
+                    // 添加历史消息
+                    data.history.forEach(msg => {
+                        const messageHTML = msg.sender === 'user' ? `
+                            <div class="flex items-start justify-end space-x-3">
+                                <div class="max-w-[75%]">
+                                    <div class="bg-gradient-to-r from-gray-800 to-gray-700 p-4 rounded-2xl shadow-lg chat-bubble-user border border-purple-500/30 backdrop-blur-sm">
+                                        ${msg.type === 'text' ? `<p class="text-gray-100">${msg.content}</p>` : ''}
+                                        ${msg.type === 'image' ? `<img src="${msg.image_path}" alt="用户上传图片" class="rounded-lg max-h-60" />` : ''}
+                                        ${msg.type === 'image' && msg.content ? `<p class="text-gray-100 mt-2">${msg.content}</p>` : ''}
+                                    </div>
+                                    <p class="text-xs text-pink-400/60 mt-1 text-right">${msg.timestamp}</p>
+                                </div>
+                            </div>` : `
+                            <div class="flex items-start space-x-3">
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-r from-purple-700 to-pink-700 flex-shrink-0 border-2 border-pink-500/50 shadow-lg overflow-hidden">
+                                    <img src="https://picsum.photos/id/64/100/100" alt="Alpha" class="w-full h-full object-cover">
+                                </div>
+                                <div class="max-w-[75%]">
+                                    <div class="bg-gradient-to-r from-purple-900/80 to-pink-900/80 p-4 rounded-2xl shadow-lg chat-bubble-ai border border-pink-500/30 backdrop-blur-sm">
+                                        <p class="text-gray-100">${msg.content}</p>
+                                    </div>
+                                    <p class="text-xs text-pink-400/60 mt-1">${msg.timestamp}</p>
+                                </div>
+                            </div>`;
+                        chatMessages.insertAdjacentHTML('beforeend', messageHTML);
+                    });
+
+                    // 滚动到底部
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }
+            } catch (error) {
+                console.error('加载聊天历史失败:', error);
+            }
+        }
+
+        // 页面加载时获取好感度和聊天历史
+        // 获取保存的人格设置
+        async function loadSavedSettings() {
+            try {
+                const response = await fetch('/get_settings');
+                const data = await response.json();
+                if (data.status === 'success' && data.personality) {
+                    document.getElementById('personalitySelect').value = data.personality;
+                }
+            } catch (error) {
+                console.error('获取设置失败:', error);
+            }
+        }
+
+        window.addEventListener('load', () => {
+            loadChatHistory();
+            fetch('/get_favorability')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        document.getElementById('favorabilityValue').textContent = data.favorability;
+                    }
+                });
+            loadSavedSettings(); // 加载保存的人格设置
+        });
+    </script>
+</body>
+</html>
